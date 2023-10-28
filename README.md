@@ -4,12 +4,12 @@ This is a test assignment with objective to build a simple market simulator that
 
 ## How to Run
 ```bash
-python .\main.py
+python main.py
 ```
 
 ## How to Run Tests
 ```bash
-python -m unittest .\main.py
+python -m unittest main.py
 ```
 ```
 ----------------------------------------------------------------------
