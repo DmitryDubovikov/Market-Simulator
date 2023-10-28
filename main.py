@@ -46,6 +46,40 @@ class OrderBook:
         elif order in self.sell_orders:
             self.sell_orders.remove(order)
 
+    def match_orders(self):
+        self.buy_orders.sort(key=lambda x: (x.price, x.timestamp))
+        self.sell_orders.sort(key=lambda x: (-x.price, x.timestamp))
+
+        matched_trades = []
+        while (
+            self.buy_orders
+            and self.sell_orders
+            and self.buy_orders[-1].price >= self.sell_orders[-1].price
+        ):
+            buy_order = self.buy_orders.pop()
+            sell_order = self.sell_orders.pop()
+
+            traded_quantity = min(buy_order.quantity, sell_order.quantity)
+            trade_price = (buy_order.price + sell_order.price) / 2  # fair
+
+            matched_trades.append(
+                {
+                    "buy_order_id": buy_order.order_id,
+                    "sell_order_id": sell_order.order_id,
+                    "quantity": traded_quantity,
+                    "price": trade_price,
+                }
+            )
+
+            if buy_order.quantity > traded_quantity:
+                buy_order.quantity -= traded_quantity
+                self.buy_orders.append(buy_order)
+            elif sell_order.quantity > traded_quantity:
+                sell_order.quantity -= traded_quantity
+                self.sell_orders.append(sell_order)
+
+        return matched_trades
+
 
 def generate_random_order():
     order_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
@@ -98,6 +132,30 @@ class TestOrderBook(unittest.TestCase):
         self.order_book.remove_order(buy_order)
         self.assertEqual(len(self.order_book.buy_orders), 0)
         self.assertEqual(len(self.order_book.sell_orders), 0)
+
+    def test_match_orders(self):
+        buy_orders = [
+            Order(1, OrderType.BUY, 10, 100),
+            Order(2, OrderType.BUY, 8, 110),
+            Order(3, OrderType.BUY, 12, 95),
+        ]
+
+        sell_orders = [
+            Order(4, OrderType.SELL, 5, 120),
+            Order(5, OrderType.SELL, 15, 105),
+        ]
+
+        for order in buy_orders + sell_orders:
+            self.order_book.add_order(order)
+
+        matched_trades = self.order_book.match_orders()
+
+        self.assertEqual(len(matched_trades), 1)
+
+        self.assertEqual(matched_trades[0]["buy_order_id"], 2)
+        self.assertEqual(matched_trades[0]["sell_order_id"], 5)
+        self.assertEqual(matched_trades[0]["quantity"], 8)
+        self.assertEqual(matched_trades[0]["price"], 107.5)
 
 
 def main():
