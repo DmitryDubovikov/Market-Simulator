@@ -11,7 +11,9 @@ class OrderType(Enum):
 
 
 class Order:
-    def __init__(self, order_id, order_type, quantity, price):
+    def __init__(
+        self, order_id: str, order_type: OrderType, quantity: int, price: float
+    ):
         if not isinstance(order_type, OrderType):
             raise ValueError(
                 "Invalid value for order_type. Allowed values: OrderType.BUY or OrderType.SELL"
@@ -34,8 +36,8 @@ class Order:
 
 class OrderBook:
     def __init__(self):
-        self.buy_orders = []
-        self.sell_orders = []
+        self.buy_orders: list[Order] = []
+        self.sell_orders: list[Order] = []
 
     def __str__(self):
         buy_orders_str = ", ".join(str(order) for order in self.buy_orders)
@@ -89,25 +91,24 @@ class OrderBook:
         return matched_orders
 
 
-def generate_random_order():
+def generate_random_order() -> Order:
     order_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     order_type = random.choice([OrderType.BUY, OrderType.SELL])
     quantity = random.randint(1, 100)
-    # price = round(random.uniform(1, 100), 2)
-    price = round(random.uniform(1, 100), 0)
+    price = round(random.uniform(1, 100), 2)
     return Order(order_id, order_type, quantity, price)
 
 
 class TestOrder(unittest.TestCase):
     def test_order_creation(self):
-        order = Order(1, OrderType.BUY, 10, 100)
-        self.assertEqual(order.order_id, 1)
+        order = Order("1", OrderType.BUY, 10, 100)
+        self.assertEqual(order.order_id, "1")
         self.assertEqual(order.type, OrderType.BUY)
         self.assertEqual(order.quantity, 10)
         self.assertEqual(order.price, 100)
 
     def test_order_representation(self):
-        order = Order(1, OrderType.SELL, 5, 200)
+        order = Order("1", OrderType.SELL, 5, 200)
         expected_repr = (
             f"Order(id={order.order_id}, type={order.type}, qty={order.quantity}, "
             f"price={order.price}, time={order.timestamp})"
@@ -116,7 +117,7 @@ class TestOrder(unittest.TestCase):
 
     def test_invalid_order_type(self):
         with self.assertRaises(ValueError):
-            Order(1, "invalid", 3, 150)
+            Order("1", "invalid", 3, 150)
 
 
 class TestOrderBook(unittest.TestCase):
@@ -124,19 +125,19 @@ class TestOrderBook(unittest.TestCase):
         self.order_book = OrderBook()
 
     def test_add_buy_order(self):
-        buy_order = Order(1, OrderType.BUY, 10, 100)
+        buy_order = Order("1", OrderType.BUY, 10, 100)
         self.order_book.add_order(buy_order)
         self.assertEqual(len(self.order_book.buy_orders), 1)
         self.assertEqual(len(self.order_book.sell_orders), 0)
 
     def test_add_sell_order(self):
-        sell_order = Order(2, OrderType.SELL, 5, 200)
+        sell_order = Order("2", OrderType.SELL, 5, 200)
         self.order_book.add_order(sell_order)
         self.assertEqual(len(self.order_book.buy_orders), 0)
         self.assertEqual(len(self.order_book.sell_orders), 1)
 
     def test_remove_order(self):
-        buy_order = Order(1, OrderType.BUY, 10, 100)
+        buy_order = Order("1", OrderType.BUY, 10, 100)
         self.order_book.add_order(buy_order)
         self.order_book.remove_order(buy_order)
         self.assertEqual(len(self.order_book.buy_orders), 0)
@@ -144,14 +145,14 @@ class TestOrderBook(unittest.TestCase):
 
     def test_match_orders(self):
         buy_orders = [
-            Order(1, OrderType.BUY, 10, 100),
-            Order(2, OrderType.BUY, 8, 110),
-            Order(3, OrderType.BUY, 12, 95),
+            Order("1", OrderType.BUY, 10, 100),
+            Order("2", OrderType.BUY, 8, 110),
+            Order("3", OrderType.BUY, 12, 95),
         ]
 
         sell_orders = [
-            Order(4, OrderType.SELL, 5, 120),
-            Order(5, OrderType.SELL, 15, 105),
+            Order("4", OrderType.SELL, 5, 120),
+            Order("5", OrderType.SELL, 15, 105),
         ]
 
         for order in buy_orders + sell_orders:
@@ -161,16 +162,13 @@ class TestOrderBook(unittest.TestCase):
 
         self.assertEqual(len(matched_trades), 1)
 
-        self.assertEqual(matched_trades[0]["buy_order_id"], 2)
-        self.assertEqual(matched_trades[0]["sell_order_id"], 5)
+        self.assertEqual(matched_trades[0]["buy_order_id"], "2")
+        self.assertEqual(matched_trades[0]["sell_order_id"], "5")
         self.assertEqual(matched_trades[0]["quantity"], 8)
         self.assertEqual(matched_trades[0]["price"], 107.5)
 
 
 def main():
-    # order = generate_random_order()
-    # print(order)
-
     order_book = OrderBook()
 
     for _ in range(10):
@@ -186,7 +184,7 @@ def main():
     print(f"matched orders:\n{matched_orders}")
     print(f"order book:\n{order_book}")
 
-    for _ in range(2):
+    for _ in range(3):
         print("---------------------------")
         order = generate_random_order()
         print(f"new order:\n{order}")
