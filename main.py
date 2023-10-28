@@ -28,11 +28,19 @@ class Order:
             f"price={self.price}, time={self.timestamp})"
         )
 
+    def __str__(self):
+        return f"{self.price} {self.type.value} {self.quantity}"
+
 
 class OrderBook:
     def __init__(self):
         self.buy_orders = []
         self.sell_orders = []
+
+    def __str__(self):
+        buy_orders_str = ", ".join(str(order) for order in self.buy_orders)
+        sell_orders_str = ", ".join(str(order) for order in self.sell_orders)
+        return f"Buy Orders: [{buy_orders_str}]\nSell Orders: [{sell_orders_str}]"
 
     def add_order(self, order):
         if order.type == OrderType.BUY:
@@ -50,7 +58,7 @@ class OrderBook:
         self.buy_orders.sort(key=lambda x: (x.price, x.timestamp))
         self.sell_orders.sort(key=lambda x: (-x.price, x.timestamp))
 
-        matched_trades = []
+        matched_orders = []
         while (
             self.buy_orders
             and self.sell_orders
@@ -60,9 +68,9 @@ class OrderBook:
             sell_order = self.sell_orders.pop()
 
             traded_quantity = min(buy_order.quantity, sell_order.quantity)
-            trade_price = (buy_order.price + sell_order.price) / 2  # fair
+            trade_price = round((buy_order.price + sell_order.price) / 2, 2)  # fair
 
-            matched_trades.append(
+            matched_orders.append(
                 {
                     "buy_order_id": buy_order.order_id,
                     "sell_order_id": sell_order.order_id,
@@ -78,14 +86,15 @@ class OrderBook:
                 sell_order.quantity -= traded_quantity
                 self.sell_orders.append(sell_order)
 
-        return matched_trades
+        return matched_orders
 
 
 def generate_random_order():
     order_id = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     order_type = random.choice([OrderType.BUY, OrderType.SELL])
     quantity = random.randint(1, 100)
-    price = random.uniform(1, 100)
+    # price = round(random.uniform(1, 100), 2)
+    price = round(random.uniform(1, 100), 0)
     return Order(order_id, order_type, quantity, price)
 
 
@@ -159,9 +168,32 @@ class TestOrderBook(unittest.TestCase):
 
 
 def main():
-    order = generate_random_order()
-    print(order)
-    pass
+    # order = generate_random_order()
+    # print(order)
+
+    order_book = OrderBook()
+
+    for _ in range(10):
+        order = generate_random_order()
+        order_book.add_order(order)
+
+    print(order_book)
+    print("---------------------------")
+    print("start trading...")
+    print("---------------------------")
+
+    matched_orders = order_book.match_orders()
+    print(f"matched orders:\n{matched_orders}")
+    print(f"order book:\n{order_book}")
+
+    for _ in range(2):
+        print("---------------------------")
+        order = generate_random_order()
+        print(f"new order:\n{order}")
+        order_book.add_order(order)
+        matched_orders = order_book.match_orders()
+        print(f"matched orders:\n{matched_orders}")
+        print(f"order book:\n{order_book}")
 
 
 if __name__ == "__main__":
